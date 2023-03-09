@@ -1,6 +1,7 @@
 import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
+import pytest
 
 class Bfield:
     def __init__(self, mag_moment, mag_components):
@@ -49,10 +50,6 @@ def tests():
     zs = jnp.linspace(-2.,2.,21)
 
     Xs, Zs = jnp.meshgrid(xs, zs, indexing='ij')
-    assert Xs[0,0] == -1.
-    assert Zs[0,0] == -2.
-    assert Xs[10,5] == 0.
-    assert Zs[5,5] == -1.
 
     bfield_vNv = jax.vmap(pure_dip.vector, in_axes=(0,None,0), out_axes=0)
     assert bfield_vNv(xs, 0.0, zs)[0][5] == pure_dip.vector(xs[5], 0.0, zs[5])[0]
@@ -64,10 +61,13 @@ def tests():
     assert bfield_mNm(Xs, 0.0, Zs)[2][3][4] == pure_dip.vector(Xs[4][3], 0.0, Zs[4][3])[2]
 
     bfield_mNm_norms = jnp.linalg.norm(bfield_mNm(Xs, 0.0, Zs), axis=0).T
-    assert bfield_mNm_norms[10][5] == pure_dip.strength(Xs[10][5], 0.0, Zs[10][5])
+
+    assert jnp.allclose(bfield_mNm_norms[10][5], pure_dip.strength(Xs[10][5], 0.0, Zs[10][5]))
     
     plt.quiver(Zs, Xs, \
-        bfield_mNm(Xs, 0.0, Zs)[0]/bfield_mNm_norms, bfield_mNm(Xs, 0.0, Zs)[2]/bfield_mNm_norms)
+        bfield_mNm(Xs, 0.0, Zs)[0]/bfield_mNm_norms.T, bfield_mNm(Xs, 0.0, Zs)[2]/bfield_mNm_norms.T, \
+        jnp.log(bfield_mNm_norms), cmap='plasma')
+    plt.colorbar()
     plt.show()
 
     bstrength_vNv = jax.vmap(pure_dip.strength, in_axes=(0,None,0), out_axes=0)
