@@ -1,7 +1,5 @@
 import jax
 import jax.numpy as jnp
-import matplotlib.pyplot as plt
-import pytest
 
 class Bfield:
     def __init__(self, mag_moment, mag_components):
@@ -29,11 +27,12 @@ class Bfield:
 
     @jax.partial(jax.jit, static_argnums=(0,))
     def strength(self, x, y, z):
-        point = jnp.array([x, y, z])
         return jnp.linalg.norm(self.vector(x, y, z))
 
 
 def tests():
+    import matplotlib.pyplot as plt
+
     test_point = jnp.array([0., 0., 1.])
 
     mag_moment = [0., 0., 1.]
