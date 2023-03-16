@@ -40,7 +40,7 @@ class Bfield:
             + self.quad * quad_potential \
             + self.oct * oct_potential
         
-        return 1.0/total_potential
+        return total_potential
 
     @jax.partial(jax.jit, static_argnums=(0,))
     def strength(self, x, y, z):
