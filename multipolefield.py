@@ -26,6 +26,23 @@ class Bfield:
         return -total_potential
 
     @jax.partial(jax.jit, static_argnums=(0,))
+    def fieldline_coordinate(self, x, y, z):
+        point = jnp.array([x, y, z])
+        point_distance = jnp.linalg.norm(point)
+        cosine = jnp.dot(self.moment, point)/point_distance
+        sine = jnp.sqrt(1.0 - cosine*cosine)
+
+        dip_potential = sine / point_distance
+        quad_potential = 3.0 * cosine * sine / point_distance**2
+        oct_potential = sine * (7.5 * cosine**2 - 1.5) / point_distance**3
+
+        total_potential = self.dip * dip_potential \
+            + self.quad * quad_potential \
+            + self.oct * oct_potential
+        
+        return 1.0/total_potential
+
+    @jax.partial(jax.jit, static_argnums=(0,))
     def strength(self, x, y, z):
         return jnp.linalg.norm(self.vector(x, y, z))
 
@@ -72,6 +89,27 @@ def tests():
     bstrength_vNv = jax.vmap(pure_dip.strength, in_axes=(0,None,0), out_axes=0)
     bstrength_mNm = jax.vmap(bstrength_vNv, in_axes=(1,None,1), out_axes=0)
 
+def fieldline_coordinate_test():
+    import matplotlib.pyplot as plt
+
+    mag_moment = [0., 0., 1.]
+    pure_dip = Bfield(mag_moment, jnp.array([1.,0.,0.]))
+
+    assert pure_dip.fieldline_coordinate(1.0,0.0,0.0) == pure_dip.fieldline_coordinate(0.0,1.0,0.0)
+
+    # Make a contour plot of the fieldline_coordinate
+    xs = jnp.linspace(-5.,5.,101)
+    ys = jnp.zeros_like(xs)
+    zs = jnp.linspace(-5.,5.,101)
+
+    Xs, Zs = jnp.meshgrid(xs, zs, indexing='ij')
+
+    fieldline_vNv = jax.vmap(pure_dip.fieldline_coordinate, in_axes=(0,None,0), out_axes=0)
+    fieldline_mNm = jax.vmap(fieldline_vNv, in_axes=(1,None,1), out_axes=0)
+
+    plt.contour(Zs, Xs, fieldline_mNm(Xs, 0.0, Zs), [0.125,0.25,0.5,1.0], cmap='plasma')
+    plt.colorbar()
+    plt.show()
     
 if __name__ == "__main__":
-    tests()
+    fieldline_coordinate_test()
