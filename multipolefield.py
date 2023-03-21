@@ -32,9 +32,9 @@ class Bfield:
         cosine = jnp.dot(self.moment, point)/point_distance
         sine = jnp.sqrt(1.0 - cosine*cosine)
 
-        dip_potential = sine / point_distance
-        quad_potential = 3.0 * cosine * sine / point_distance**2
-        oct_potential = sine * (7.5 * cosine**2 - 1.5) / point_distance**3
+        dip_potential = sine / point_distance**2
+        quad_potential = 3.0 * cosine * sine / point_distance**3
+        oct_potential = sine * (7.5 * cosine**2 - 1.5) / point_distance**4
 
         total_potential = self.dip * dip_potential \
             + self.quad * quad_potential \
